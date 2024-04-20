@@ -65,6 +65,8 @@ void loop() {
     while (Fall_detected < 0.0)
       ;
     {
+      // normal mode
+      // enters this while when Fall_detection is = 0
 
       if (digitalRead(ButtonPin) == HIGH) {
         readChar.writeValue(Fall_detected);
@@ -108,6 +110,8 @@ void loop() {
       delay(10);
     }
     while (Fall_detected > 0.0) {
+      // fall detection mode
+      // enters this while loop when Fall_detection = 1
       digitalWrite(GreenLEDPin, LOW);
       digitalWrite(RedLEDPin, HIGH);
       counter = 0;
