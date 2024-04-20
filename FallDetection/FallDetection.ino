@@ -1,12 +1,12 @@
 #include <Arduino_BMI270_BMM150.h>
-
 #include <ArduinoBLE.h>
+
 BLEService newService("180A");  // creating the service
 BLEByteCharacteristic readChar("2A57", BLERead);
 BLEByteCharacteristic writeChar("2A58", BLEWrite);
 
 float x, y, z;
-int plusThreshold = 50, minusThreshold = -50;
+int plusThreshold = 100, minusThreshold = -100;
 int Fall_detected = 0;
 const int RedLEDPin = 2;
 const int GreenLEDPin = 3;
@@ -50,6 +50,9 @@ void setup() {
 
   BLE.advertise();
   Serial.println("Bluetooth device active");
+
+  digitalWrite(GreenLEDPin, HIGH);
+  digitalWrite(RedLEDPin, LOW);
 }
 void loop() {
 
@@ -57,19 +60,17 @@ void loop() {
 
   if (central) {  // if a central is connected to the peripheral
     Serial.print("Connected to central: ");
-    // readChar.writeValue(Fall_detected);
-
     Serial.println(central.address());  // print the central's BT address
 
-    // digitalWrite(GreenLEDPin, HIGH);
-    // digitalWrite(RedLEDPin, LOW);
-
     while (Fall_detected < 0.0)
-;
+      ;
     {
-      digitalWrite(GreenLEDPin, HIGH);
-      digitalWrite(RedLEDPin, LOW);
 
+      if (digitalRead(ButtonPin) == HIGH) {
+        readChar.writeValue(Fall_detected);
+        digitalWrite(GreenLEDPin, HIGH);
+        digitalWrite(RedLEDPin, LOW);
+      }
 
       if (IMU.gyroscopeAvailable()) {
         IMU.readGyroscope(x, y, z);
@@ -94,7 +95,6 @@ void loop() {
         Serial.println("Collision left");
         delay(10);
       }
-
       if (z < minusThreshold) {
         Fall_detected = 1;
         Serial.println("Collision up");
@@ -108,7 +108,6 @@ void loop() {
       delay(10);
     }
     while (Fall_detected > 0.0) {
-      // fall detected mode
       digitalWrite(GreenLEDPin, LOW);
       digitalWrite(RedLEDPin, HIGH);
       counter = 0;
@@ -117,25 +116,14 @@ void loop() {
         Serial.println(digitalRead(ButtonPin));
         if (digitalRead(ButtonPin) == HIGH) {
           counter = 1000;
-          readChar.writeValue(0);
         }
         counter++;
         delay(10);
       }
-    
-      readChar.writeValue(Fall_detected);
 
-      //   Serial.println("Distance printed to peripheral");
-      // while (counter < 500) {
-      //   readChar.writeValue(Fall_detected);
-      //   Serial.println("Distance printed to peripheral");
-      //   counter++;
-      //   delay(10);
-      // }
+      readChar.writeValue(Fall_detected);
       Fall_detected = 0;
     }
   }
 
-  Serial.print("Disconnected from central: ");
-  Serial.println(central.address());
 }
